@@ -31,3 +31,18 @@ class ThreesBoard:
 if __name__ == '__main__':
     hiscore = np.array([[1, 192, 1536, 6144], [1, 48, 384, 48], [3, 12, 96, 12], [1, 3, 6, 3]])
     assert ThreesBoard(init_arr=hiscore).get_score() == 600525
+    
+    try:
+        ThreesBoard(init_arr=hiscore-1)
+    except ValueError:
+        pass
+
+    try:
+        ThreesBoard(init_arr=hiscore[:, :-1])
+    except AttributeError:
+        pass
+
+    try:
+        ThreesBoard(init_arr=list(hiscore))
+    except TypeError:
+        pass
