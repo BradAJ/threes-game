@@ -71,26 +71,30 @@ class ThreesBoard:
         returns: boolean of 'move successful' """
 
         new_b = -1 * np.ones([4, 4])
-        moved_bool = False
+        moved_inds = set()
         
         coords = list(product(range(4), range(4)))
         if dir == 'l':
             coords.sort(key=lambda x: x[1])
+            new_coords = [new_ind, 3]
         elif dir == 'd':
             coords.sort(key=lambda x: -x[0])
+            new_coords = [0, new_ind]
         elif dir == 'r':
             coords.sort(key=lambda x: -x[1])
+            new_coords = [new_ind, 0]
         else: #dir == 'u'
-            pass
+            new_coords = [3, new_ind]
 
         first4 = tuple(zip(*coords[:4]))
         new_b[first4] = self.board[first4]
         
         for i, j in coords[4:]:
+            mv_ind = i if dir in {'l', 'r'} else j
             val = self.board[i, j]
             if val == 0:
                 new_b[i, j] = 0
-                moved_bool = True
+                moved_inds.add(mv_ind)
                 continue
 
             di, dj = self.move_coords[dir]
@@ -102,7 +106,7 @@ class ThreesBoard:
                 if combs == {1, 2}:
                     new_b[adj_i, adj_j] = 3
                     new_b[i, j] = 0
-                    moved_bool = True 
+                    moved_inds.add(mv_ind)
                 else:
                     new_b[i, j] = val
             else:
@@ -111,11 +115,14 @@ class ThreesBoard:
                 else:
                     new_b[adj_i, adj_j] = 2 * val
                     new_b[i, j] = 0
-                    moved_bool = True        
-
-            
-        #return new_b
-        return moved_bool
+                    moved_inds.add(mv_ind)        
+       
+        if new_ind in moved_inds:
+            new_b[new_coords] = new_val
+            self.board = new_b
+            return True
+        else:
+            return False
 
 
         
@@ -150,4 +157,4 @@ if __name__ == '__main__':
     for dir in ['u', 'd', 'l', 'r']:
         assert not ThreesBoard(init_arr=hiscore).move(dir, 1, 0)
         #print(ThreesBoard(init_arr=hiscore).move(dir, 1, 0))
-        assert ThreesBoard().move(dir, 1, 0)
+        #assert ThreesBoard().move(dir, 1, 0)
