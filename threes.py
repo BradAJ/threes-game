@@ -26,3 +26,8 @@ class ThreesBoard:
     def get_score(self):
         """self.values scores: {0, 0, 3**1, 3**2, 3**3, ...}"""
         return (3**(np.log2(self.board[self.board >= 3] / 3) + 1)).sum()
+
+
+if __name__ == '__main__':
+    hiscore = np.array([[1, 192, 1536, 6144], [1, 48, 384, 48], [3, 12, 96, 12], [1, 3, 6, 3]])
+    assert ThreesBoard(init_arr=hiscore).get_score() == 600525
