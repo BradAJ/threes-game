@@ -100,6 +100,11 @@ class ThreesBoard:
             di, dj = self.move_coords[dir]
             adj_i, adj_j = i + di, j + dj
             adj_val = new_b[adj_i, adj_j]
+            if adj_val == 0:
+                new_b[adj_i, adj_j] = val
+                new_b[i, j] = 0
+                moved_inds.add(mv_ind)
+                continue
             #TODO rewrite __combinable (as __moveable(?)) to make it more useable here...
             combs = set([val, adj_val])
             if len(combs) != 1:
@@ -118,7 +123,7 @@ class ThreesBoard:
                     moved_inds.add(mv_ind)        
        
         if new_ind in moved_inds:
-            new_b[new_coords] = new_val
+            new_b[new_coords[0], new_coords[1]] = new_val
             self.board = new_b
             return True
         else:
@@ -158,3 +163,9 @@ if __name__ == '__main__':
         assert not ThreesBoard(init_arr=hiscore).move(dir, 1, 0)
         #print(ThreesBoard(init_arr=hiscore).move(dir, 1, 0))
         #assert ThreesBoard().move(dir, 1, 0)
+
+    b1 = np.array([[1, 6, 1, 3], [0, 12, 6, 0], [0, 2, 2, 3], [0, 6, 0, 1]])
+    game1 = ThreesBoard(init_arr=b1)
+    game1.move('u', 2, 3)
+    assert (game1.board == np.array([[1, 6, 1, 3], [0, 12, 6, 3], [0, 2, 2, 1], [0, 6, 0, 2]])).all()
+    #print(game1.board)
