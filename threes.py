@@ -1,4 +1,6 @@
+from shutil import move
 import numpy as np
+from itertools import product
 
 class ThreesEmulator:
     pass
@@ -61,6 +63,59 @@ class ThreesBoard:
         else:
             return False
         
+    def move(self, dir, new_val, new_ind):
+        """move tiles in direction dir and place a new tile with value new_val at
+        location new_ind. (where dir and new_ind together determine the new i,j
+        coordinates e.g. ['u', 2] means [3, 2], and ['r', 1] -> [1, 0]).
+        
+        returns: boolean of 'move successful' """
+
+        new_b = -1 * np.ones([4, 4])
+        moved_bool = False
+        
+        coords = list(product(range(4), range(4)))
+        if dir == 'l':
+            coords.sort(key=lambda x: x[1])
+        elif dir == 'd':
+            coords.sort(key=lambda x: -x[0])
+        elif dir == 'r':
+            coords.sort(key=lambda x: -x[1])
+        else: #dir == 'u'
+            pass
+
+        first4 = tuple(zip(*coords[:4]))
+        new_b[first4] = self.board[first4]
+        
+        for i, j in coords[4:]:
+            val = self.board[i, j]
+            if val == 0:
+                new_b[i, j] = 0
+                moved_bool = True
+                continue
+
+            di, dj = self.move_coords[dir]
+            adj_i, adj_j = i + di, j + dj
+            adj_val = new_b[adj_i, adj_j]
+            #TODO rewrite __combinable (as __moveable(?)) to make it more useable here...
+            combs = set([val, adj_val])
+            if len(combs) != 1:
+                if combs == {1, 2}:
+                    new_b[adj_i, adj_j] = 3
+                    new_b[i, j] = 0
+                    moved_bool = True 
+                else:
+                    new_b[i, j] = val
+            else:
+                if combs == {1} or combs == {2}:
+                    new_b[i, j] = val
+                else:
+                    new_b[adj_i, adj_j] = 2 * val
+                    new_b[i, j] = 0
+                    moved_bool = True        
+
+            
+        #return new_b
+        return moved_bool
 
 
         
@@ -90,3 +145,9 @@ if __name__ == '__main__':
 
     assert not ThreesBoard(init_arr=hiscore).can_play()
     assert ThreesBoard().can_play()
+
+
+    for dir in ['u', 'd', 'l', 'r']:
+        assert not ThreesBoard(init_arr=hiscore).move(dir, 1, 0)
+        #print(ThreesBoard(init_arr=hiscore).move(dir, 1, 0))
+        assert ThreesBoard().move(dir, 1, 0)
