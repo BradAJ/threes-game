@@ -6,6 +6,8 @@ class ThreesEmulator:
 class ThreesBoard:
     def __init__(self, init_arr=None):
         self.values = set([0, 1, 2] + [3 * 2**i for i in range(12)])
+        self.move_coords = {'u': [-1,0], 'd':[1,0], 'l':[0,-1], 'r':[0,1]}
+        self.match_d = {}
         if init_arr is not None:
             if type(init_arr) is not np.ndarray:
                 raise TypeError(f'Unexpected type for init_arr, {type(init_arr)}. Expecting np.ndarray.')
@@ -28,6 +30,45 @@ class ThreesBoard:
         return (3**(np.log2(self.board[self.board >= 3] / 3) + 1)).sum()
 
 
+    def can_play(self):
+        if 0 in self.board:
+            return True
+
+        for i in range(4):
+            for j in range(4):
+                for dir in self.move_coords:
+                    if self.__combinable(i, j, dir):
+                        return True
+
+        return False
+
+
+    def __combinable(self, i, j, dir):
+        """given coords (i, j) and direction dir {'u', 'd', 'l', 'r'}, would the 
+        move result combined tiles"""
+        val = self.board[i, j]
+        if val == 0:
+            return False
+        #tiles on edges can't be pushed in one dir
+        elif (i, dir) in {(0, 'u'), (3, 'd')} or (j, dir) in {(0, 'l'), (3, 'r')}:
+            return False
+
+        di, dj = self.move_coords[dir]
+        adj_val = self.board[i + di, j + dj]
+        combs = set([val, adj_val])
+        if len(combs) != 1 and combs == {1, 2}:
+            return True 
+        else:
+            return False
+        
+
+
+        
+        
+
+
+
+
 if __name__ == '__main__':
     hiscore = np.array([[1, 192, 1536, 6144], [1, 48, 384, 48], [3, 12, 96, 12], [1, 3, 6, 3]])
     assert ThreesBoard(init_arr=hiscore).get_score() == 600525
@@ -46,3 +87,6 @@ if __name__ == '__main__':
         ThreesBoard(init_arr=list(hiscore))
     except TypeError:
         pass
+
+    assert not ThreesBoard(init_arr=hiscore).can_play()
+    assert ThreesBoard().can_play()
