@@ -1,9 +1,6 @@
-from shutil import move
 import numpy as np
 from itertools import product
 
-class ThreesEmulator:
-    pass
 
 class ThreesBoard:
     def __init__(self, init_arr=None):
@@ -62,6 +59,7 @@ class ThreesBoard:
             return True 
         else:
             return False
+
         
     def move(self, dir, new_val, new_ind):
         """move tiles in direction dir and place a new tile with value new_val at
@@ -128,12 +126,6 @@ class ThreesBoard:
             return True
         else:
             return False
-
-
-        
-        
-
-
 
 
 if __name__ == '__main__':
