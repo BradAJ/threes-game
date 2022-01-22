@@ -94,7 +94,7 @@ class ThreesBoard:
             val = self.board[i, j]
             if val == 0:
                 new_b[i, j] = 0
-                moved_inds.add(mv_ind)
+                #moved_inds.add(mv_ind)
                 continue
 
             di, dj = self.move_coords[dir]
@@ -166,6 +166,64 @@ if __name__ == '__main__':
 
     b1 = np.array([[1, 6, 1, 3], [0, 12, 6, 0], [0, 2, 2, 3], [0, 6, 0, 1]])
     game1 = ThreesBoard(init_arr=b1)
-    game1.move('u', 2, 3)
-    assert (game1.board == np.array([[1, 6, 1, 3], [0, 12, 6, 3], [0, 2, 2, 1], [0, 6, 0, 2]])).all()
-    #print(game1.board)
+    assert game1.move('l', 2, 0) == False
+    game1.move('l', 2, 0)
+    assert (game1.board == b1).all()
+    assert game1.move('r', 2, 0) == False
+    assert game1.move('d', 2, 1) == False
+    game1.move('l', 2, 1)
+    assert (game1.board == np.array([[1, 6, 1, 3], [12, 6, 0, 2], [2, 2, 3, 0], [6, 0, 1, 0]])).all()
+
+    game2 = ThreesBoard(init_arr=b1)
+    for ind in range(3):
+        assert game2.move('u', 2, ind) == False    
+    game2.move('u', 2, 3)
+    assert (game2.board == np.array([[1, 6, 1, 3], [0, 12, 6, 3], [0, 2, 2, 1], [0, 6, 0, 2]])).all()
+    
+    game3 = ThreesBoard(init_arr=b1)
+    game3.move('d', 2, 0)
+    assert (game3.board == np.array([[2, 6, 0, 0], [1, 12, 1, 3], [0, 2, 6, 3], [0, 6, 2, 1]])).all()
+
+    game4 = ThreesBoard(init_arr=b1)
+    assert game4.move('r', 2, 2) == False
+    game4.move('r', 2, 1)
+    assert (game4.board == np.array([[1, 6, 1, 3], [2, 0, 12, 6], [0, 2, 2, 3], [0, 0, 6, 1]])).all()
+    game4.move('l', 3, 2)
+    assert (game4.board == np.array([[1, 6, 1, 3], [2, 12, 6, 0], [2, 2, 3, 3], [0, 6, 1, 0]])).all()
+    game4.move('r', 2, 3)
+    assert (game4.board == np.array([[1, 6, 1, 3], [0, 2, 12, 6], [0, 2, 2, 6], [2, 0, 6, 1]])).all()
+    game4.move('d', 1, 1)
+    assert (game4.board == np.array([[0, 1, 1, 0], [1, 6, 12, 3], [0, 2, 2, 12], [2, 2, 6, 1]])).all()
+    game4.move('r', 3, 0)
+    assert (game4.board == np.array([[3, 0, 1, 1], [1, 6, 12, 3], [0, 2, 2, 12], [2, 2, 6, 1]])).all()
+    game4.move('l', 1, 2)
+    assert (game4.board == np.array([[3, 1, 1, 0], [1, 6, 12, 3], [2, 2, 12, 1], [2, 2, 6, 1]])).all()
+    game4.move('u', 2, 3)    
+    assert (game4.board == np.array([[3, 1, 1, 3], [3, 6, 24, 1], [2, 2, 6, 1], [0, 2, 0, 2]])).all()
+    game4.move('l', 1, 3)
+    assert (game4.board == np.array([[3, 1, 1, 3], [3, 6, 24, 1], [2, 2, 6, 1], [2, 0, 2, 1]])).all()
+    game4.move('r', 3, 3)
+    assert (game4.board == np.array([[3, 1, 1, 3], [3, 6, 24, 1], [2, 2, 6, 1], [3, 2, 0, 3]])).all()
+    game4.move('d', 3, 0)
+    assert (game4.board == np.array([[3, 1, 0, 3], [6, 6, 1, 1], [2, 2, 24, 1], [3, 2, 6, 3]])).all()
+    game4.move('l', 1, 1)
+    assert (game4.board == np.array([[3, 1, 3, 0], [12, 1, 1, 1], [2, 2, 24, 1], [3, 2, 6, 3]])).all()
+    game4.move('r', 2, 0)
+    assert (game4.board == np.array([[2, 3, 1, 3], [12, 1, 1, 1], [2, 2, 24, 1], [3, 2, 6, 3]])).all()
+    game4.move('d', 3, 1)
+    assert (game4.board == np.array([[2, 3, 1, 3], [12, 3, 1, 1], [2, 3, 24, 1], [3, 2, 6, 3]])).all()
+    game4.move('u', 2, 1)
+    assert (game4.board == np.array([[2, 6, 1, 3], [12, 3, 1, 1], [2, 2, 24, 1], [3, 2, 6, 3]])).all()
+    for dir in ['u', 'd', 'l', 'r']:
+        for ind in range(4):
+            assert game4.move(dir, 1, ind) == False
+    assert game4.can_play() == False
+    assert game4.get_score() == 138
+
+
+    
+
+
+
+
+
