@@ -35,6 +35,8 @@ class ThreesEmulator:
         with the max on board tile >=192 generate these hints. for consistency
         always return a list.
         """
+##NEXT TILE NEEDS TO BE A CLASS LEVEL ATTRIBUTE so: 
+        #next_tile = self.next_tile
         next_tile = self.gen_next_tile()
         if next_tile < 6:
             return [next_tile]
@@ -90,7 +92,9 @@ class ThreesEmulator:
             new_b, moved_inds = self.b.get_intermediate_board(dir)
             new_ind = np.random.choice(list(moved_inds))
             new_tile = self.gen_next_tile()
-            self.b.move(dir, new_tile, new_ind, new_board=new_b)
+            moved_bool = self.b.move(dir, new_tile, new_ind, new_board=new_b)
+            if not moved_bool:
+                print(self.b.get_score())
         return move_dirs
 
         
