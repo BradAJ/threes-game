@@ -68,21 +68,40 @@ class ThreesBoard:
         
         returns: boolean of 'move successful' """
 
+        new_b, moved_inds = self.get_intermediate_board(dir)
+
+        if dir == 'l':
+            new_coords = [new_ind, 3]
+        elif dir == 'd':
+            new_coords = [0, new_ind]
+        elif dir == 'r':
+            new_coords = [new_ind, 0]
+        else: #dir == 'u'
+            new_coords = [3, new_ind]
+
+        if new_ind in moved_inds:
+            new_b[new_coords[0], new_coords[1]] = new_val
+            self.board = new_b
+            return True
+        else:
+            return False
+
+    def get_intermediate_board(self, dir):
+        """move tiles in direction dir w/o adding new tile.
+        
+        returns: tuple: (new_board array, set of indices available for new tile) """
         new_b = -1 * np.ones([4, 4])
         moved_inds = set()
         
         coords = list(product(range(4), range(4)))
         if dir == 'l':
             coords.sort(key=lambda x: x[1])
-            new_coords = [new_ind, 3]
         elif dir == 'd':
             coords.sort(key=lambda x: -x[0])
-            new_coords = [0, new_ind]
         elif dir == 'r':
             coords.sort(key=lambda x: -x[1])
-            new_coords = [new_ind, 0]
         else: #dir == 'u'
-            new_coords = [3, new_ind]
+            pass
 
         first4 = tuple(zip(*coords[:4]))
         new_b[first4] = self.board[first4]
@@ -120,12 +139,7 @@ class ThreesBoard:
                     new_b[i, j] = 0
                     moved_inds.add(mv_ind)        
        
-        if new_ind in moved_inds:
-            new_b[new_coords[0], new_coords[1]] = new_val
-            self.board = new_b
-            return True
-        else:
-            return False
+        return new_b, moved_inds
 
 
 if __name__ == '__main__':
