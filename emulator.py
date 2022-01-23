@@ -30,6 +30,36 @@ class ThreesEmulator:
             return np.random.choice(base + next_bigs, p=ps)
 
 
+    def gen_next_hint(self):
+        """big tiles are obscured with a group of three possibles for games
+        with the max on board tile >=192 generate these hints. for consistency
+        always return a list.
+        """
+        next_tile = self.gen_next_tile()
+        if next_tile < 6:
+            return [next_tile]
+        
+        maxtile = self.b.board.max()
+        constrained_bigs = {48:[6], 96:[6, 12]}
+        if maxtile in constrained_bigs:
+            return constrained_bigs[maxtile]
+        
+        bigs =  [3 * 2**i for i in range(1, 12)]
+        ind = bigs.index(next_tile)
+        if ind == 0:
+            lo_ind = 0
+        elif ind == 1:
+            lo_ind = np.random.choice([0, 1])
+        else:
+            lo_ind = np.random.choice(range(ind-2, ind+1))
+        
+        return bigs[lo_ind:lo_ind+3]
+        
+
+        
+
+
+
     def play_randomly(self):
         dirs = ['u', 'd', 'l', 'r']
         while self.b.can_play():
