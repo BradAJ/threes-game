@@ -61,14 +61,21 @@ class ThreesBoard:
             return False
 
         
-    def move(self, dir, new_val, new_ind):
+    def move(self, dir, new_val, new_ind, new_board=None):
         """move tiles in direction dir and place a new tile with value new_val at
         location new_ind. (where dir and new_ind together determine the new i,j
         coordinates e.g. ['u', 2] means [3, 2], and ['r', 1] -> [1, 0]).
+
+        new_board is a moved board array w/o the new tile (should be specified
+        if .get_intermediate_board has been called separately)
         
         returns: boolean of 'move successful' """
 
-        new_b, moved_inds = self.get_intermediate_board(dir)
+        if new_board is None:
+            new_b, moved_inds = self.get_intermediate_board(dir)
+        else:
+            new_b = new_board
+            moved_inds = set([new_ind])
 
         if dir == 'l':
             new_coords = [new_ind, 3]
