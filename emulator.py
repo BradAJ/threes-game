@@ -54,7 +54,44 @@ class ThreesEmulator:
             lo_ind = np.random.choice(range(ind-2, ind+1))
         
         return bigs[lo_ind:lo_ind+3]
+
+
+    def record_game(self):
+        move_dirs = []
+
+        u_s = '\x1b[A'
+
+
+        d_s = '\x1b[B'
+
+        l_s = '\x1b[D'
+
+        r_s = '\x1b[C'
         
+        inp = ''
+
+        while inp != 'q':
+            print(self.b.board)
+            inp = input('? ')
+            if inp == u_s:
+                dir = 'u'
+            elif inp == d_s:
+                dir = 'd'
+            elif inp == l_s:
+                dir = 'l'
+            elif inp == r_s:
+                dir = 'r'
+            else:
+                break
+            
+            move_dirs.append(dir)
+
+            # consolidate into .step(self, dir) 
+            new_b, moved_inds = self.b.get_intermediate_board(dir)
+            new_ind = np.random.choice(list(moved_inds))
+            new_tile = self.gen_next_tile()
+            self.b.move(dir, new_tile, new_ind, new_board=new_b)
+        return move_dirs
 
         
 
@@ -82,12 +119,15 @@ if __name__ == "__main__":
     #print(x.b.board)
     #print(x.play_randomly())
 
-    scores = []
-    for _ in range(10000):
-        x = ThreesEmulator()
-        scores.append(x.play_randomly())
+    # scores = []
+    # for _ in range(10000):
+    #     x = ThreesEmulator()
+    #     scores.append(x.play_randomly())
     
-    print(scores)
-    print('')
-    print(max(scores))
+    # print(scores)
+    # print('')
+    # print(max(scores))
+
+    x = ThreesEmulator()
+    print(x.record_game())
 
