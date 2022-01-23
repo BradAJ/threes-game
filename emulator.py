@@ -1,3 +1,4 @@
+import re
 from threes import ThreesBoard
 import numpy as np
 
@@ -6,6 +7,8 @@ class ThreesEmulator:
         """For init_arr: see ThreesBoard. For p_bigtile: see .gen_next_tile"""
         self.b = ThreesBoard(init_arr=init_arr)
         self.p_bigtile = p_bigtile
+        self.next_tile = None
+        self.recording = []
 
     
     def gen_next_tile(self):
@@ -20,14 +23,14 @@ class ThreesEmulator:
         base = [1, 2, 3]
         maxtile = self.b.board.max()
         if maxtile < 48:
-            return np.random.choice(base)
+            self.next_tile = np.random.choice(base)
         else:
             bigs =  [3 * 2**i for i in range(1, 12)]
             next_bigs = bigs[:bigs.index(maxtile) - 2]
             big_p = self.p_bigtile / len(next_bigs)
             base_p = (1 - self.p_bigtile) / 3.
             ps = [base_p] * 3 + [big_p] * len(next_bigs)
-            return np.random.choice(base + next_bigs, p=ps)
+            self.next_tile = np.random.choice(base + next_bigs, p=ps)
 
 
     def gen_next_hint(self):
@@ -35,9 +38,9 @@ class ThreesEmulator:
         with the max on board tile >=192 generate these hints. for consistency
         always return a list.
         """
-##NEXT TILE NEEDS TO BE A CLASS LEVEL ATTRIBUTE so: 
-        #next_tile = self.next_tile
-        next_tile = self.gen_next_tile()
+        if self.next_tile is None:
+            self.gen_next_tile()
+        next_tile = self.next_tile
         if next_tile < 6:
             return [next_tile]
         
@@ -59,20 +62,15 @@ class ThreesEmulator:
 
 
     def record_game(self):
-        move_dirs = []
-
+        #move_dirs = []
         u_s = '\x1b[A'
-
-
         d_s = '\x1b[B'
-
         l_s = '\x1b[D'
-
         r_s = '\x1b[C'
         
         inp = ''
-
         while inp != 'q':
+            print(self.gen_next_hint())
             print(self.b.board)
             inp = input('? ')
             if inp == u_s:
@@ -86,18 +84,28 @@ class ThreesEmulator:
             else:
                 break
             
-            move_dirs.append(dir)
+            #move_dirs.append(dir)
 
-            # consolidate into .step(self, dir) 
-            new_b, moved_inds = self.b.get_intermediate_board(dir)
-            new_ind = np.random.choice(list(moved_inds))
-            new_tile = self.gen_next_tile()
-            moved_bool = self.b.move(dir, new_tile, new_ind, new_board=new_b)
+            moved_bool = self.step(dir, record_step=True)
             if not moved_bool:
                 print(self.b.get_score())
-        return move_dirs
+        return self.recording
 
         
+    def step(self, dir, record_step=True):
+        new_b, moved_inds = self.b.get_intermediate_board(dir)
+        if len(moved_inds) > 0:
+            new_ind = np.random.choice(list(moved_inds))
+            if self.next_tile is None:
+                self.gen_next_tile()
+            moved_bool = self.b.move(dir, self.next_tile, new_ind, new_board=new_b)
+            if moved_bool and record_step:
+                self.recording.append([dir, self.next_tile, new_ind])        
+            self.next_tile = None
+        else:
+            moved_bool = False
+        
+        return moved_bool
 
 
 
@@ -105,23 +113,19 @@ class ThreesEmulator:
         dirs = ['u', 'd', 'l', 'r']
         while self.b.can_play():
             np.random.shuffle(dirs)
-            for d_try in dirs:
-                new_b, moved_inds = self.b.get_intermediate_board(d_try)
-                if len(moved_inds) > 0:
+            for dir in dirs:
+                moved_bool = self.step(dir)
+                if moved_bool:
                     break
-            
-            new_ind = np.random.choice(list(moved_inds))
-            new_tile = self.gen_next_tile()
-            self.b.move(d_try, new_tile, new_ind, new_board=new_b)
 
         return self.b.get_score()
 
 
 
 if __name__ == "__main__":
-    #x = ThreesEmulator()
+    x = ThreesEmulator()
     #print(x.b.board)
-    #print(x.play_randomly())
+    print(x.play_randomly())
 
     # scores = []
     # for _ in range(10000):
