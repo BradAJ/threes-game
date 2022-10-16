@@ -43,7 +43,7 @@ class ThreesBoard:
 
 
     def __combinable(self, i, j, dir):
-        """given coords (i, j) and direction dir {'u', 'd', 'l', 'r'}, would the 
+        """given coords (i, j) and direction dir {'u', 'd', 'l', 'r'}, would the
         move result combined tiles"""
         val = self.board[i, j]
         if val == 0:
@@ -56,11 +56,11 @@ class ThreesBoard:
         adj_val = self.board[i + di, j + dj]
         combs = set([val, adj_val])
         if len(combs) != 1 and combs == {1, 2}:
-            return True 
+            return True
         else:
             return False
 
-        
+
     def move(self, dir, new_val, new_ind, new_board=None):
         """move tiles in direction dir and place a new tile with value new_val at
         location new_ind. (where dir and new_ind together determine the new i,j
@@ -68,7 +68,7 @@ class ThreesBoard:
 
         new_board is a moved board array w/o the new tile (should be specified
         if .get_intermediate_board has been called separately)
-        
+
         returns: boolean of 'move successful' """
 
         if new_board is None:
@@ -93,13 +93,14 @@ class ThreesBoard:
         else:
             return False
 
-    def get_intermediate_board(self, dir):
+    def get_intermediate_board(self, dir, return_moving=False):
         """move tiles in direction dir w/o adding new tile.
-        
+
         returns: tuple: (new_board array, set of indices available for new tile) """
         new_b = -1 * np.ones([4, 4])
+        moving = self.board.copy()
         moved_inds = set()
-        
+
         coords = list(product(range(4), range(4)))
         if dir == 'l':
             coords.sort(key=lambda x: x[1])
@@ -112,7 +113,7 @@ class ThreesBoard:
 
         first4 = tuple(zip(*coords[:4]))
         new_b[first4] = self.board[first4]
-        
+
         for i, j in coords[4:]:
             mv_ind = i if dir in {'l', 'r'} else j
             val = self.board[i, j]
@@ -127,6 +128,8 @@ class ThreesBoard:
             if adj_val == 0:
                 new_b[adj_i, adj_j] = val
                 new_b[i, j] = 0
+                moving[adj_i, adj_j] = -1
+                moving[i, j] = -1
                 moved_inds.add(mv_ind)
                 continue
             #TODO rewrite __combinable (as __moveable(?)) to make it more useable here...
@@ -135,6 +138,8 @@ class ThreesBoard:
                 if combs == {1, 2}:
                     new_b[adj_i, adj_j] = 3
                     new_b[i, j] = 0
+                    moving[adj_i, adj_j] = -1
+                    moving[i, j] = -1
                     moved_inds.add(mv_ind)
                 else:
                     new_b[i, j] = val
@@ -144,15 +149,19 @@ class ThreesBoard:
                 else:
                     new_b[adj_i, adj_j] = 2 * val
                     new_b[i, j] = 0
-                    moved_inds.add(mv_ind)        
-       
-        return new_b, moved_inds
+                    moving[adj_i, adj_j] = -1
+                    moving[i, j] = -1
+                    moved_inds.add(mv_ind)
+        if return_moving:
+          return new_b, moved_inds, moving
+        else:
+          return new_b, moved_inds
 
 
 if __name__ == '__main__':
     hiscore = np.array([[1, 192, 1536, 6144], [1, 48, 384, 48], [3, 12, 96, 12], [1, 3, 6, 3]])
     assert ThreesBoard(init_arr=hiscore).get_score() == 600525
-    
+
     try:
         ThreesBoard(init_arr=hiscore-1)
     except ValueError:
@@ -189,10 +198,10 @@ if __name__ == '__main__':
 
     game2 = ThreesBoard(init_arr=b1)
     for ind in range(3):
-        assert game2.move('u', 2, ind) == False    
+        assert game2.move('u', 2, ind) == False
     game2.move('u', 2, 3)
     assert (game2.board == np.array([[1, 6, 1, 3], [0, 12, 6, 3], [0, 2, 2, 1], [0, 6, 0, 2]])).all()
-    
+
     game3 = ThreesBoard(init_arr=b1)
     game3.move('d', 2, 0)
     assert (game3.board == np.array([[2, 6, 0, 0], [1, 12, 1, 3], [0, 2, 6, 3], [0, 6, 2, 1]])).all()
@@ -211,7 +220,7 @@ if __name__ == '__main__':
     assert (game4.board == np.array([[3, 0, 1, 1], [1, 6, 12, 3], [0, 2, 2, 12], [2, 2, 6, 1]])).all()
     game4.move('l', 1, 2)
     assert (game4.board == np.array([[3, 1, 1, 0], [1, 6, 12, 3], [2, 2, 12, 1], [2, 2, 6, 1]])).all()
-    game4.move('u', 2, 3)    
+    game4.move('u', 2, 3)
     assert (game4.board == np.array([[3, 1, 1, 3], [3, 6, 24, 1], [2, 2, 6, 1], [0, 2, 0, 2]])).all()
     game4.move('l', 1, 3)
     assert (game4.board == np.array([[3, 1, 1, 3], [3, 6, 24, 1], [2, 2, 6, 1], [2, 0, 2, 1]])).all()
@@ -233,10 +242,21 @@ if __name__ == '__main__':
     assert game4.can_play() == False
     assert game4.get_score() == 138
 
+    ############# OCT 2022 UPDATE
 
-    
+    recorded = ThreesBoard(np.array([[  0 ,  1,   2, 768],
+     [  0 ,  3 ,  0 ,  3],
+     [  2  , 2 ,  0 ,  0],
+     [  0 ,  0 ,  2 ,  3]]))
 
+    #print(recorded.get_intermediate_board('r', return_moving=True))
 
+    recorded.move('r', 1, 0)
+    #print(recorded.board)
 
+    #print(recorded.get_intermediate_board('u', return_moving=True))
 
+    recorded.move('u', 1, 2)
+    print(recorded.board)
 
+    print(recorded.get_intermediate_board('u', return_moving=True))
