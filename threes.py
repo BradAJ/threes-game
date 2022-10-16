@@ -97,7 +97,7 @@ class ThreesBoard:
         """move tiles in direction dir w/o adding new tile.
 
         returns: tuple: (new_board array, set of indices available for new tile) """
-        new_b = -1 * np.ones([4, 4])
+        new_b = -1 * np.ones([4, 4], dtype=int)
         moving = self.board.copy()
         moved_inds = set()
 
