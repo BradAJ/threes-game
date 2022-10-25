@@ -16,125 +16,125 @@ class ThreesAnalyzer(ThreesBoard):
 
     self.cur_frame = 0
     self.move_cnt = 0
-    self.move_details = [[None, None, None, None]]
+    self.move_details = [['move num', 'move dir', 'next tile', 'next tile coords', 'moving frame num', 'current frame num']]
     self.get_intermediate_dict()
 
 
-  def define_move(self):
-    #check for single perfect match in moving frames (not intermediates)
-    possible_dirs = []
-    for dirch, scores in self.score_next_frame().items():
-      if scores[0] == 16:
-        possible_dirs.append(dirch)
+  # def define_move(self):
+  #   #check for single perfect match in moving frames (not intermediates)
+  #   possible_dirs = []
+  #   for dirch, scores in self.score_next_frame().items():
+  #     if scores[0] == 16:
+  #       possible_dirs.append(dirch)
 
-    if len(possible_dirs) == 1:
-      mv_dir = possible_dirs[0]
-      self.move_cnt += 1
-      self.move_details.append([self.move_cnt, mv_dir, -1, -1])
-      self.cur_frame += 1
-      new_tile_d = self.get_new_tile(mv_dir)
+  #   if len(possible_dirs) == 1:
+  #     mv_dir = possible_dirs[0]
+  #     self.move_cnt += 1
+  #     self.move_details.append([self.move_cnt, mv_dir, -1, -1])
+  #     self.cur_frame += 1
+  #     new_tile_d = self.get_new_tile(mv_dir)
 
-      finalize_move = False
-      # perfect new board after a perfect move match
-      if new_tile_d['match_cnt'] == 16:
-        finalize_move = True
-      else:
-        # OR the only mismatches are where frame has a -1
-        # might be too permissive if frame has a lot of -1s?
-        frame = self.frames[new_tile_d['frame_num']]
-        if (frame[frame != new_tile_d['brd']] == -1).all():
-          finalize_move = True
+  #     finalize_move = False
+  #     # perfect new board after a perfect move match
+  #     if new_tile_d['match_cnt'] == 16:
+  #       finalize_move = True
+  #     else:
+  #       # OR the only mismatches are where frame has a -1
+  #       # might be too permissive if frame has a lot of -1s?
+  #       frame = self.frames[new_tile_d['frame_num']]
+  #       if (frame[frame != new_tile_d['brd']] == -1).all():
+  #         finalize_move = True
 
-      if finalize_move:
-        self.board = new_tile_d['brd']
-        #move history housekeeping:
-        frame_info = []
-        for i in range(self.cur_frame, new_tile_d['frame_num']):
-          frame_info.append([self.move_cnt, mv_dir, -1, -1])
+  #     if finalize_move:
+  #       self.board = new_tile_d['brd']
+  #       #move history housekeeping:
+  #       frame_info = []
+  #       for i in range(self.cur_frame, new_tile_d['frame_num']):
+  #         frame_info.append([self.move_cnt, mv_dir, -1, -1])
 
-        frame_info.append([self.move_cnt, mv_dir, new_tile_d['val'],
-                           new_tile_d['coords']])
-        self.move_details.extend(frame_info)
-        self.cur_frame = new_tile_d['frame_num']
-        self.get_intermediate_dict()
+  #       frame_info.append([self.move_cnt, mv_dir, new_tile_d['val'],
+  #                          new_tile_d['coords']])
+  #       self.move_details.extend(frame_info)
+  #       self.cur_frame = new_tile_d['frame_num']
+  #       self.get_intermediate_dict()
 
-    else: #num dirs !=1
-      print('poss', possible_dirs)
-
-
-
-
-  def get_new_tile(self, dirch, print_board_and_frame=False):
-    """#new_tile_d contains a match count assuming, mv_dir, and new_tile_info[:2]
-      #it may take several frames before this guess is made, new_tile_info[2]
-      #gives the frame number where the comparison with the board is made
-      #so decide what to do when matching is imperfect:
-
-    dirch: character in {'u', 'd', 'l', 'r'}
-
-    returns: dict w/ keys: 'val', 'coord', 'brd', 'frame_num', 'match_cnt'"""
-    mv_brd, inter_brd, new_tile_inds = self.intermediate_dict[dirch]
-
-    #TODO: clean up repeated code (also used in super.move)
-    if dirch == 'l':
-      new_coords = [(new_ind, 3) for new_ind in new_tile_inds]
-    elif dirch == 'd':
-      new_coords = [(0, new_ind) for new_ind in new_tile_inds]
-    elif dirch == 'r':
-      new_coords = [(new_ind, 0) for new_ind in new_tile_inds]
-    else: #dirch == 'u'
-      new_coords = [(3, new_ind) for new_ind in new_tile_inds]
-
-    new_tile_val = None
-    step = 0
-    new_tile_coords = []
-    while new_tile_val is None:
-      step += 1
-      for coord in new_coords:
-        possible_new_tile = self.frames[self.cur_frame + step][coord]
-        if possible_new_tile != inter_brd[coord]:
-          if possible_new_tile == -1:
-            if mv_brd[coord] != -1:
-              #location of new tile found, but not its value
-              new_tile_coords.append(coord)
-            # else:
-            #   continue
-              #can't say anything for sure
-          else:
-            #warning: this could get overwritten in multiple mismatches
-            new_tile_val = possible_new_tile
-            new_tile_coords.append(coord)
-
-    if len(set(new_tile_coords)) > 1:
-      raise Exception('Ambiguous situation at frame, step:',self.cur_frame, step)
-    else:
-      #possible completed move:
-      new_brd = inter_brd.copy()
-      new_brd[new_tile_coords[0]] = new_tile_val
-      match_cnt = (new_brd == self.frames[self.cur_frame + step]).sum()
-
-      if print_board_and_frame:
-        print('ThreesBoard Moved')
-        print(new_brd)
-        print('Frame')
-        print(self.frames[self.cur_frame + step])
-        raise Exception('Mismatched update above.')
-
-      return {'val':new_tile_val, 'coords':new_tile_coords[0], 'brd':new_brd,
-              'frame_num':self.cur_frame + step, 'match_cnt':match_cnt}
+  #   # else: #num dirs !=1
+  #   #   print('poss', possible_dirs)
 
 
 
-  def score_next_frame(self):
-    if not self.intermediate_dict:
-      return False
 
-    match_scores = {}
-    for dirch, arrsinds in self.intermediate_dict.items():
-      scs = [(arr == self.frames[self.cur_frame + 1, :]).sum() for arr in arrsinds[:2]]
-      match_scores[dirch] = scs
+  # def get_new_tile(self, dirch, print_board_and_frame=False):
+  #   """#new_tile_d contains a match count assuming, mv_dir, and new_tile_info[:2]
+  #     #it may take several frames before this guess is made, new_tile_info[2]
+  #     #gives the frame number where the comparison with the board is made
+  #     #so decide what to do when matching is imperfect:
 
-    return match_scores
+  #   dirch: character in {'u', 'd', 'l', 'r'}
+
+  #   returns: dict w/ keys: 'val', 'coord', 'brd', 'frame_num', 'match_cnt'"""
+  #   mv_brd, inter_brd, new_tile_inds = self.intermediate_dict[dirch]
+
+  #   #TODO: clean up repeated code (also used in super.move)
+  #   if dirch == 'l':
+  #     new_coords = [(new_ind, 3) for new_ind in new_tile_inds]
+  #   elif dirch == 'd':
+  #     new_coords = [(0, new_ind) for new_ind in new_tile_inds]
+  #   elif dirch == 'r':
+  #     new_coords = [(new_ind, 0) for new_ind in new_tile_inds]
+  #   else: #dirch == 'u'
+  #     new_coords = [(3, new_ind) for new_ind in new_tile_inds]
+
+  #   new_tile_val = None
+  #   step = 0
+  #   new_tile_coords = []
+  #   while new_tile_val is None:
+  #     step += 1
+  #     for coord in new_coords:
+  #       possible_new_tile = self.frames[self.cur_frame + step][coord]
+  #       if possible_new_tile != inter_brd[coord]:
+  #         if possible_new_tile == -1:
+  #           if mv_brd[coord] != -1:
+  #             #location of new tile found, but not its value
+  #             new_tile_coords.append(coord)
+  #           # else:
+  #           #   continue
+  #             #can't say anything for sure
+  #         else:
+  #           #warning: this could get overwritten in multiple mismatches
+  #           new_tile_val = possible_new_tile
+  #           new_tile_coords.append(coord)
+
+  #   if len(set(new_tile_coords)) > 1:
+  #     raise Exception('Ambiguous situation at frame, step:',self.cur_frame, step)
+  #   else:
+  #     #possible completed move:
+  #     new_brd = inter_brd.copy()
+  #     new_brd[new_tile_coords[0]] = new_tile_val
+  #     match_cnt = (new_brd == self.frames[self.cur_frame + step]).sum()
+
+  #     if print_board_and_frame:
+  #       print('ThreesBoard Moved')
+  #       print(new_brd)
+  #       print('Frame')
+  #       print(self.frames[self.cur_frame + step])
+  #       raise Exception('Mismatched update above.')
+
+  #     return {'val':new_tile_val, 'coords':new_tile_coords[0], 'brd':new_brd,
+  #             'frame_num':self.cur_frame + step, 'match_cnt':match_cnt}
+
+
+
+  # def score_next_frame(self):
+  #   if not self.intermediate_dict:
+  #     return False
+
+  #   match_scores = {}
+  #   for dirch, arrsinds in self.intermediate_dict.items():
+  #     scs = [(arr == self.frames[self.cur_frame + 1, :]).sum() for arr in arrsinds[:2]]
+  #     match_scores[dirch] = scs
+
+  #   return match_scores
 
 
   def get_intermediate_dict(self):
@@ -147,6 +147,60 @@ class ThreesAnalyzer(ThreesBoard):
 
     self.intermediate_dict = d_out
 
+
+  def find_moving_match(self, next_tiles, frame_nos):
+    ####TODO move next_tiles, frame_nos into instantiation!!
+    move_dir = None
+    found_moving_match = False 
+    next_tile_cur = next_tiles[frame_nos[self.cur_frame]]
+    for i in range(self.cur_frame + 1, self.frames.shape[0]):
+      for dirch, movetup in self.intermediate_dict.items():
+        if (self.frames[i] == movetup[0]).all(): 
+          next_tile_i = next_tiles[frame_nos[i]]
+          if next_tile_cur == next_tile_i:
+            move_dir = dirch
+            found_moving_match = True
+            break
+          else:
+            raise Exception('Next mismatch', self.cur_frame, i)
+
+      if found_moving_match:
+        break
+    return move_dir, next_tile_cur, i
+
+
+  def define_move(self, next_tiles, frame_nos):
+    dirch, next_tile, moving_frame_ind = self.find_moving_match(next_tiles, frame_nos)
+    print(dirch, next_tile, moving_frame_ind)
+    if not dirch:
+      raise Exception('No moving frame found')
+
+    interbrd, new_tile_inds = self.intermediate_dict[dirch][1:]
+    #TODO: clean up repeated code (also used in super.move)
+    if dirch == 'l':
+      new_coords = [(new_ind, 3) for new_ind in new_tile_inds]
+    elif dirch == 'd':
+      new_coords = [(0, new_ind) for new_ind in new_tile_inds]
+    elif dirch == 'r':
+      new_coords = [(new_ind, 0) for new_ind in new_tile_inds]
+    else: #dirch == 'u'
+      new_coords = [(3, new_ind) for new_ind in new_tile_inds]
+
+    for i in range(moving_frame_ind, self.frames.shape[0]):
+      for crds in new_coords:
+        poss_next_brd = interbrd.copy()
+        poss_next_brd[crds] = next_tile
+        if (self.frames[i] == poss_next_brd).all():
+          self.board = poss_next_brd
+          self.cur_frame = i
+          self.move_cnt += 1
+          self.move_details.append([self.move_cnt, dirch, next_tile, crds, moving_frame_ind, i])
+          self.get_intermediate_dict()
+          return True
+        else:
+          if i < 10:
+            print(i, crds, (self.frames[i] == poss_next_brd).sum())
+    return False
 
 
 if __name__ == '__main__':
