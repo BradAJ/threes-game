@@ -48,7 +48,8 @@ class ThreesAnalyzer(ThreesBoard):
             found_moving_match = True
             break
           else:
-            raise Exception('Next mismatch', self.cur_frame, i)
+            print('Next mismatch', self.cur_frame, i, next_tile_cur, next_tile_i)
+            return None
 
       if found_moving_match:
         break
@@ -58,7 +59,8 @@ class ThreesAnalyzer(ThreesBoard):
   def define_move(self):
     dirch, next_tile, moving_frame_ind = self.find_moving_match()
     if not dirch:
-      raise Exception('No moving frame found')
+      ####raise Exception('No moving frame found', dirch, self.cur_frame)
+      return False
 
     interbrd, new_tile_inds = self.intermediate_dict[dirch][1:]
     #TODO: clean up repeated code (also used in super.move)

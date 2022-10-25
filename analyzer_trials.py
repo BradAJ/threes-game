@@ -19,7 +19,7 @@ if __name__ == "__main__":
             frame_nos.append(iminus + 1)
             nexts_seq.append(next_tiles[iminus + 1])
 
-    # nontrans = list(filter(lambda x: (game_seq[x] != -1).all(), range(len(game_seq))))
+    nontrans = list(filter(lambda x: (game_seq[x] != -1).all(), range(len(game_seq))))
     # frame_scores = {}
     # for i in range(len(nontrans)-1):
     #     game_ind = nontrans[i]
@@ -88,22 +88,57 @@ if __name__ == "__main__":
     #             #print(fno, framedata)
     #             print(npz['fpaths'][frame_nos[fno]])
 
-    game = ThreesAnalyzer(np.array(game_seq), next_tiles=np.array(nexts_seq))
-    while game.cur_frame < game.frames.shape[0]:
-        move_bool = game.define_move() #(next_tiles, frame_nos)
-        if not move_bool:
-            break
+    # game = ThreesAnalyzer(np.array(game_seq), next_tiles=np.array(nexts_seq))
+    # jump_ind = 0
+    # while True:
+    #     move_bool = game.define_move() #(next_tiles, frame_nos)
+    #     if not move_bool:
+    #         if game.cur_frame < jump_ind:
+    #             game.board = game.frames[jump_ind]
+    #             game.cur_frame = jump_ind
+    #             game.move_cnt += 1000
+    #             game.get_intermediate_dict()
+    #             print(game.find_moving_match())
+    #         else:
+    #             break
 
-    print(game.move_details)
+    # print(game.move_details)
 
 
+    
 
-    print(frame_nos[266:278])
-    print(nexts_seq[266:278])
-    print(game_seq[277].reshape([4,4]))
-    print(game.define_move())
-    #print(np.where(np.array(nexts_seq) > 3))
+    # pslice = slice(545,551)
+    # print(frame_nos[pslice])
+    # print(nexts_seq[pslice])
+    # print(game_seq[pslice.stop-1].reshape([4,4]))
+    # print(game.define_move())
+    # print(game.find_moving_match())
+    # #print(np.where(np.array(nexts_seq) > 3))
+    # for i, arr in enumerate(np.array(game_seq)[pslice.stop:]):
+    #     if (arr != -1).all():
+    #         print(i + pslice.stop) 
+    #         break
+    seen_inds = -1
+    start_stops = []
+    for j in nontrans:
+        if j > seen_inds:
+            game2 = ThreesAnalyzer(np.array(game_seq[j:]), next_tiles=np.array(nexts_seq[j:]))
+            while True:
+                move_bool = game2.define_move() #(next_tiles, frame_nos)
+                if not move_bool:
+                    break
+            start_stops.append([j, game2.cur_frame + j])
+            print(start_stops[-1])
+            seen_inds = game2.cur_frame + j
 
+
+    # print(start_stops)
+    #         print(frame_nos[j + game2.cur_frame])
+
+    # print(game2.move_details)
+    
+    # #print(game2.find_moving_match())
+    # print(game2.define_move())
 
 
                     
