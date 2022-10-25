@@ -12,10 +12,12 @@ if __name__ == "__main__":
     game_arrs = npz['label_arrs']
     game_seq = [game_arrs[0]]
     frame_nos = [0]
+    nexts_seq = [next_tiles[0]]
     for iminus,arr in enumerate(game_arrs[1:]):
         if not (arr == game_seq[-1]).all():
             game_seq.append(arr)
             frame_nos.append(iminus + 1)
+            nexts_seq.append(next_tiles[iminus + 1])
 
     # nontrans = list(filter(lambda x: (game_seq[x] != -1).all(), range(len(game_seq))))
     # frame_scores = {}
@@ -86,9 +88,9 @@ if __name__ == "__main__":
     #             #print(fno, framedata)
     #             print(npz['fpaths'][frame_nos[fno]])
 
-    game = ThreesAnalyzer(np.array(game_seq))
+    game = ThreesAnalyzer(np.array(game_seq), next_tiles=np.array(nexts_seq))
     while game.cur_frame < game.frames.shape[0]:
-        move_bool = game.define_move(next_tiles, frame_nos)
+        move_bool = game.define_move() #(next_tiles, frame_nos)
         if not move_bool:
             break
 
@@ -96,7 +98,7 @@ if __name__ == "__main__":
 
 
 
-
+    print(frame_nos[255:264])
 
 
 
