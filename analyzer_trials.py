@@ -98,7 +98,11 @@ if __name__ == "__main__":
 
 
 
-    print(frame_nos[255:264])
+    print(frame_nos[266:278])
+    print(nexts_seq[266:278])
+    print(game_seq[277].reshape([4,4]))
+    print(game.define_move())
+    #print(np.where(np.array(nexts_seq) > 3))
 
 
 

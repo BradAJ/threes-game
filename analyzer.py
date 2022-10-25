@@ -1,10 +1,15 @@
 #import numpy as np
 from threes import ThreesBoard
+from collections import defaultdict
 
 class ThreesAnalyzer(ThreesBoard):
   def __init__(self, game_seq, next_tiles):
     """game_seq: N x 4 x 4 np.array, Array of frame arrays
        next_tiles: N x 1 np.array of 'next tile' values
+                   NOTE: The code assumes next_tiles >3 are always shown as 
+                   trios on screen e.g. 6/12/24. Where the highest tile is
+                   the placeholder. This assumption will cause problems if 
+                   highest tile on board is <=96.
     """
     self.frames = game_seq.reshape([game_seq.shape[0], 4, 4])
     super().__init__(init_arr=self.frames[0, :, :])
@@ -66,17 +71,29 @@ class ThreesAnalyzer(ThreesBoard):
     else: #dirch == 'u'
       new_coords = [(3, new_ind) for new_ind in new_tile_inds]
 
-    for i in range(moving_frame_ind, self.frames.shape[0]):
-      for crds in new_coords:
+    poss_next_brds = defaultdict(list)
+    for crds in new_coords:
+      # See NOTE on next_tiles > 3 in __init__
+      if next_tile < 24: 
+        denoms = [1]
+      else:
+        denoms = [1, 2, 4]
+      for denom in denoms:
         poss_next_brd = interbrd.copy()
-        poss_next_brd[crds] = next_tile
-        if (self.frames[i] == poss_next_brd).all():
-          self.board = poss_next_brd
-          self.cur_frame = i
-          self.move_cnt += 1
-          self.move_details.append([self.move_cnt, dirch, next_tile, crds, moving_frame_ind, i])
-          self.get_intermediate_dict()
-          return True
+        next_tile_divided = int(next_tile / denom)
+        poss_next_brd[crds] = next_tile_divided
+        poss_next_brds[next_tile_divided].append(poss_next_brd)
+
+    for i in range(moving_frame_ind, self.frames.shape[0]):
+      for next_tile_div, next_brd_l in poss_next_brds.items():
+        for poss_next_brd in next_brd_l:
+          if (self.frames[i] == poss_next_brd).all():
+            self.board = poss_next_brd
+            self.cur_frame = i
+            self.move_cnt += 1
+            self.move_details.append([self.move_cnt, dirch, next_tile_div, crds, moving_frame_ind, i])
+            self.get_intermediate_dict()
+            return True
 
     return False
 
