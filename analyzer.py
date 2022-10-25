@@ -82,11 +82,11 @@ class ThreesAnalyzer(ThreesBoard):
         poss_next_brd = interbrd.copy()
         next_tile_divided = int(next_tile / denom)
         poss_next_brd[crds] = next_tile_divided
-        poss_next_brds[next_tile_divided].append(poss_next_brd)
+        poss_next_brds[next_tile_divided].append([poss_next_brd, crds])
 
     for i in range(moving_frame_ind, self.frames.shape[0]):
-      for next_tile_div, next_brd_l in poss_next_brds.items():
-        for poss_next_brd in next_brd_l:
+      for next_tile_div, next_brd_crds_l in poss_next_brds.items():
+        for poss_next_brd, crds in next_brd_crds_l:
           if (self.frames[i] == poss_next_brd).all():
             self.board = poss_next_brd
             self.cur_frame = i
