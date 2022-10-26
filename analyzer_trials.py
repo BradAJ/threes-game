@@ -124,7 +124,7 @@ if __name__ == "__main__":
         if j > seen_inds:
             game2 = ThreesAnalyzer(np.array(game_seq[j:]), next_tiles=np.array(nexts_seq[j:]))
             while True:
-                move_bool = game2.define_move() #(next_tiles, frame_nos)
+                move_bool = game2.define_move(nexts_use_max_on_board=True) #(next_tiles, frame_nos)
                 if not move_bool:
                     break
             start_stops.append([j, game2.cur_frame + j])

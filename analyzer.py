@@ -35,7 +35,9 @@ class ThreesAnalyzer(ThreesBoard):
     self.intermediate_dict = d_out
 
 
-  def find_moving_match(self):
+  def find_moving_match(self, nexts_use_max_on_board=False):
+    """nexts_use_max_on_board: bool. See self.define_move() for details
+    """
     move_dir = None
     found_moving_match = False 
     next_tile_cur = self.next_tiles[self.cur_frame]
@@ -49,6 +51,10 @@ class ThreesAnalyzer(ThreesBoard):
             break
           else:
             print('Next mismatch', self.cur_frame, i, next_tile_cur, next_tile_i)
+            if nexts_use_max_on_board and next_tile_cur > 3 and next_tile_i > 3:
+              move_dir = dirch
+              found_moving_match = True
+              break
             return None
 
       if found_moving_match:
@@ -56,8 +62,21 @@ class ThreesAnalyzer(ThreesBoard):
     return move_dir, next_tile_cur, i
 
 
-  def define_move(self):
-    dirch, next_tile, moving_frame_ind = self.find_moving_match()
+  def define_move(self, nexts_use_max_on_board=False):
+    """nexts_use_max_on_board: bool. 
+    when next_tile > 3 the image reads are
+    error prone due to rarity. A way around this is when a trio of big tiles
+    is shown that's easy to detect, so can search all possible big tiles based
+    on the constraint that the largest possible next_tile is = max_tile_on_board / 8.
+    e.g. if max_tile_on_board == 768 then the big tile set for such a game is:
+    {6, 12, 24, 48, 96} and if 1536 then .union({192}) and so on. 
+    If nexts_use_max_on_board:
+      search these sets
+    else:
+      search the trio implied by the predictions (where the max of the trio
+      is the placeholder)
+    """
+    dirch, next_tile, moving_frame_ind = self.find_moving_match(nexts_use_max_on_board=nexts_use_max_on_board)
     if not dirch:
       ####raise Exception('No moving frame found', dirch, self.cur_frame)
       return False
@@ -77,14 +96,18 @@ class ThreesAnalyzer(ThreesBoard):
     for crds in new_coords:
       # See NOTE on next_tiles > 3 in __init__
       if next_tile < 24: 
-        denoms = [1]
+        all_nexts = [next_tile]
       else:
-        denoms = [1, 2, 4]
-      for denom in denoms:
+        if nexts_use_max_on_board:
+          max_on_board = self.board.max()
+          bigs = [6 * 2 ** y for y in range(10)]
+          all_nexts = filter(lambda x: x <= max_on_board / 8, bigs)
+        else:
+          all_nexts = [int(next_tile / denom) for denom in [1, 2, 4]]
+      for nt in all_nexts:
         poss_next_brd = interbrd.copy()
-        next_tile_divided = int(next_tile / denom)
-        poss_next_brd[crds] = next_tile_divided
-        poss_next_brds[next_tile_divided].append([poss_next_brd, crds])
+        poss_next_brd[crds] = nt
+        poss_next_brds[nt].append([poss_next_brd, crds])
 
     for i in range(moving_frame_ind, self.frames.shape[0]):
       for next_tile_div, next_brd_crds_l in poss_next_brds.items():
