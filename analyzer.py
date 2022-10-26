@@ -55,7 +55,7 @@ class ThreesAnalyzer(ThreesBoard):
               move_dir = dirch
               found_moving_match = True
               break
-            return None
+            return None, None, None
 
       if found_moving_match:
         break

@@ -130,9 +130,11 @@ if __name__ == "__main__":
             start_stops.append([j, game2.cur_frame + j])
             print(start_stops[-1])
             seen_inds = game2.cur_frame + j
-
-
-    # print(start_stops)
+    print('\n')
+    for ss in start_stops:
+        if ss[1] - ss[0] > 200:
+            print(ss)
+    #print(start_stops)
     #         print(frame_nos[j + game2.cur_frame])
 
     # print(game2.move_details)
