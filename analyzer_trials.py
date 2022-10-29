@@ -4,12 +4,19 @@ import numpy as np
 from collections import defaultdict
 
 if __name__ == "__main__":
-    npz = np.load('/Users/brad/Downloads/oct17_threes_boards_label_arrs_fpaths.npz')
     #npz = np.load('/Users/brad/Downloads/threes_boards_label_arrs_fpaths.npz')
-    nextsdata = np.load('/Users/brad/Downloads/oct17_threes_next_tile_label_arrs.npz')
-    next_tiles = nextsdata['next_tiles']
+    # npz = np.load('/Users/brad/Downloads/oct17_threes_boards_label_arrs_fpaths.npz')
+    # nextsdata = np.load('/Users/brad/Downloads/oct17_threes_next_tile_label_arrs.npz')
+    # next_tiles = nextsdata['next_tiles']
+    # game_arrs = npz['label_arrs']
+    
+    npz = np.load('/Users/brad/Downloads/oct27_board_next_tile_arrs.npz')
+    game_arrs = npz['board_arrs']
+    next_tiles = npz['next_arrs']
+    
+    
 
-    game_arrs = npz['label_arrs']
+    
     game_seq = [game_arrs[0]]
     frame_nos = [0]
     nexts_seq = [next_tiles[0]]
@@ -120,7 +127,8 @@ if __name__ == "__main__":
     #         break
     seen_inds = -1
     start_stops = []
-    for j in nontrans:
+    nontrans_inds = []
+    for i, j in enumerate(nontrans):
         if j > seen_inds:
             game2 = ThreesAnalyzer(np.array(game_seq[j:]), next_tiles=np.array(nexts_seq[j:]))
             while True:
@@ -128,12 +136,15 @@ if __name__ == "__main__":
                 if not move_bool:
                     break
             start_stops.append([j, game2.cur_frame + j])
-            print(start_stops[-1])
+            nontrans_inds.append(i)
+            #print(start_stops[-1])
+            print([j, frame_nos[j], i], ',')
             seen_inds = game2.cur_frame + j
     print('\n')
-    for ss in start_stops:
-        if ss[1] - ss[0] > 200:
-            print(ss)
+    print(nontrans_inds)
+    # for ss in start_stops:
+    #     if ss[1] - ss[0] > 200:
+    #         print(ss)
     #print(start_stops)
     #         print(frame_nos[j + game2.cur_frame])
 

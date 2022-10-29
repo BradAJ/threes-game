@@ -43,7 +43,8 @@ class ThreesAnalyzer(ThreesBoard):
     next_tile_cur = self.next_tiles[self.cur_frame]
     for i in range(self.cur_frame + 1, self.frames.shape[0]):
       for dirch, movetup in self.intermediate_dict.items():
-        if (self.frames[i] == movetup[0]).all(): 
+        #arrays match AND the set of indices for next tile is not empty
+        if len(movetup[2]) > 0 and (self.frames[i] == movetup[0]).all(): 
           next_tile_i = self.next_tiles[i]
           if next_tile_cur == next_tile_i:
             move_dir = dirch
@@ -55,6 +56,7 @@ class ThreesAnalyzer(ThreesBoard):
               move_dir = dirch
               found_moving_match = True
               break
+
             return None, None, None
 
       if found_moving_match:
