@@ -3,6 +3,9 @@ from itertools import product
 
 
 class ThreesBoard:
+    """Emulate the mobile game Threes https://asherv.com/threes/ using Numpy
+    arrays. Can either specify the initial board as a 4x4 array or randomly
+    generate one."""
     def __init__(self, init_arr=None):
         self.values = set([0, 1, 2] + [3 * 2**i for i in range(12)])
         self.move_coords = {'u': [-1,0], 'd':[1,0], 'l':[0,-1], 'r':[0,1]}
