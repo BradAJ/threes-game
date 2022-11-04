@@ -3,6 +3,28 @@ from threes import ThreesBoard
 from collections import defaultdict
 
 class ThreesAnalyzer(ThreesBoard):
+  """Data from a Threes game consists of the 4x4 game board of tiles in 
+  {1, 2, 3, 6, 12, ..., 6144} and a next tile indicator. Thus a game can be
+  saved with 17 elements for each move. In principle there is no intermediate
+  state between moves, but in practice the visuals for the game show the tiles
+  in motion. Screen captures of game play are dominated by the motion and 
+  merging of tiles.
+  
+  The ThreesAnalyzer class takes as input Nx4x4 and Nx1 arrays of frames
+  from a screen cap (see ingest_threes_screencap.py for video to array
+  conversions) and reduces these frames to a sequence of moves. By 
+  convention when a tile is 'in motion' it occupies two places on the
+  board, both these places are labeled as -1, while completely empty
+  places are labeled 0.
+  
+  Common usage:
+  >game = ThreesAnalyzer(game_seq_array, next_tiles_array)
+  >while True:
+    moved_bool = game.define_move()
+    if not moved_bool:
+      break
+  
+  """
   def __init__(self, game_seq, next_tiles):
     """game_seq: N x 4 x 4 np.array, Array of frame arrays
        next_tiles: N x 1 np.array of 'next tile' values
@@ -35,8 +57,18 @@ class ThreesAnalyzer(ThreesBoard):
     self.intermediate_dict = d_out
 
 
-  def find_moving_match(self, nexts_use_max_on_board=False):
-    """nexts_use_max_on_board: bool. See self.define_move() for details
+  def find_moving_match(self, nexts_use_max_on_board=True):
+    """Given a current board, attempt all four moves {'u', 'd', 'l', 'r'} 
+    and try to match these with a subsequent frame based on the combination
+    of tiles that stay still and those that move and would therefore be labeled 
+    as -1.
+
+    PARAMETERS
+    nexts_use_max_on_board: bool. See self.define_move() for details
+
+    RETURNS
+    tuple of 3: direction character, next tile value, frame number of match
+      or if it fails: None, None, None
     """
     move_dir = None
     found_moving_match = False 
@@ -64,19 +96,29 @@ class ThreesAnalyzer(ThreesBoard):
     return move_dir, next_tile_cur, i
 
 
-  def define_move(self, nexts_use_max_on_board=False):
-    """nexts_use_max_on_board: bool. 
-    when next_tile > 3 the image reads are
-    error prone due to rarity. A way around this is when a trio of big tiles
-    is shown that's easy to detect, so can search all possible big tiles based
-    on the constraint that the largest possible next_tile is = max_tile_on_board / 8.
-    e.g. if max_tile_on_board == 768 then the big tile set for such a game is:
-    {6, 12, 24, 48, 96} and if 1536 then .union({192}) and so on. 
-    If nexts_use_max_on_board:
-      search these sets
-    else:
-      search the trio implied by the predictions (where the max of the trio
-      is the placeholder)
+  def define_move(self, nexts_use_max_on_board=True):
+    """Attempt to match a move given the current board and next tile indicator
+    and subsequent frames. If successful returns True.
+    
+    PARAMETERS
+    nexts_use_max_on_board: bool.
+      NOTE 
+      Due to data coming from screen captures, when next_tile > 3 the image 
+      reads are error prone due to rarity. A way around this is when a trio of 
+      big tiles is shown that's easy to detect, so can search all possible big 
+      tiles based on the constraint that the largest possible next_tile is:
+      max_tile_on_board / 8.
+      e.g. if max_tile_on_board == 768 then the big tile set for such a game is:
+      {6, 12, 24, 48, 96} 
+      if 1536 then ^^.union({192}) and so on. 
+      If nexts_use_max_on_board:
+        search these sets
+      else:
+        search the trio implied by the predictions (where the max of the trio
+        is the placeholder)
+
+    RETURNS
+      bool
     """
     dirch, next_tile, moving_frame_ind = self.find_moving_match(nexts_use_max_on_board=nexts_use_max_on_board)
     if not dirch:
