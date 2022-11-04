@@ -8,14 +8,27 @@ from sklearn.neighbors import KNeighborsClassifier
 
 
 def frame_subset2pcs_or_jpgs(movie_path, base_jpg_fname=None, mean_diff=3, pca_objs=None):
-  """movie_path: str
+  """Given a path to a video file of a screen capture of a Threes game, break this
+  into a series of jpg files (if base_jpg_fname is supplied). 
+  
+  Generally, holding each frame image as an array in memory is too costly. However,
+  each frame contains a great deal of info as pixels that are irrelevant to 
+  identifying the Threes game board and next tile. The current pipeline
+  downscales the relevant regions of the image and then reduces dimensionality
+  with PCA. This is a MUCH smaller representation of the image. So pretrained
+  sklearn PCA objects are accepted to apply these transformations, and thus
+  maintain and return a representation of each frame in memory.
+
+  PARAMETERS
+  movie_path: str
   base_jpg_fname: None or str
   mean_diff: int or float, limit of mean difference between saved frame and 
                 current frame to be considered *same*. Slices of screen and
                 looking only at GREEN channel are HARD CODED.
   pca_objs: None or pair of sklearn PCA objects: (game_board, next_tile)
   
-  returns: pair of int , count of frames seen, saved
+  RETURNS
+  None or pair: (list of board PCs, list of next tile PCs)
   """
   row_slice = slice(310, 1500)
   col_slice = slice(100, 790)
@@ -32,7 +45,7 @@ def frame_subset2pcs_or_jpgs(movie_path, base_jpg_fname=None, mean_diff=3, pca_o
     success, frame = vidcap.read()
     if success:
       diff = frame[row_slice, col_slice, 1] - old_frame[row_slice, col_slice, 1]
-      if diff.mean() > 3:
+      if diff.mean() > mean_diff:
         if base_jpg_fname:
           if count < 100:
             print('writing', count)
