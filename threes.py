@@ -45,29 +45,29 @@ class ThreesBoard:
         return False
 
 
-  def __combinable(self, i, j, dir):
-      """given coords (i, j) and direction dir {'u', 'd', 'l', 'r'}, would the
-      move result combined tiles"""
-      val = self.board[i, j]
-      if val == 0:
-          return False
-      #tiles on edges can't be pushed in one dir
-      elif (i, dir) in {(0, 'u'), (3, 'd')} or (j, dir) in {(0, 'l'), (3, 'r')}:
-          return False
+    def __combinable(self, i, j, dir):
+        """given coords (i, j) and direction dir {'u', 'd', 'l', 'r'}, would the
+        move result combined tiles"""
+        val = self.board[i, j]
+        if val == 0:
+            return False
+        #tiles on edges can't be pushed in one dir
+        elif (i, dir) in {(0, 'u'), (3, 'd')} or (j, dir) in {(0, 'l'), (3, 'r')}:
+            return False
 
-      di, dj = self.move_coords[dir]
-      adj_val = self.board[i + di, j + dj]
-      combs = set([val, adj_val])
-      if len(combs) == 1:
-          if val >= 3:
-              return True
-          else:
-              return False
-      else:
-          if combs == {1, 2}:
-              return True
-          else:
-              return False
+        di, dj = self.move_coords[dir]
+        adj_val = self.board[i + di, j + dj]
+        combs = set([val, adj_val])
+        if len(combs) == 1:
+            if val >= 3:
+                return True
+            else:
+                return False
+        else:
+            if combs == {1, 2}:
+                return True
+            else:
+                return False
 
 
     def move(self, dir, new_val, new_ind, new_board=None):
