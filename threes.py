@@ -67,7 +67,7 @@ class ThreesBoard:
           if combs == {1, 2}:
               return True
           else:
-            return False
+              return False
 
 
     def move(self, dir, new_val, new_ind, new_board=None):
