@@ -1,4 +1,6 @@
 from collections import defaultdict
+import numpy as np
+from threes import ThreesBoard
 
 class ThreesAgent(ThreesBoard):
   def __init__(self, init_arr):
@@ -55,3 +57,12 @@ class ThreesAgent(ThreesBoard):
           self.look_ahead_n_moves(n, n_so_far+1, path_accum, (parent, move_info))
 
     return path_accum
+
+
+if __name__ == "__main__":
+  almost_out = np.array([[2, 3, 1, 3], [12, 3, 1, 1], [2, 3, 24, 1], [3, 2, 6, 3]])
+  ao_tag = ThreesAgent(almost_out)
+  mvs_list_of_tups = ao_tag.look_ahead_n_moves()
+  lmlot = len(mvs_list_of_tups)
+  print(lmlot)
+  assert lmlot == 48771
