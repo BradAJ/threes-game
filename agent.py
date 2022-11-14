@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 import numpy as np
 from threes import ThreesBoard
 
@@ -105,6 +105,7 @@ def parse_move_dirs_dict(mv_d):
 
 def count_full_paths(mv_lookup, n, ignore_big_tiles=True):
   """
+  TODO: use a Counter here??
   mv_lookup: dict, returned by n_moves_dfs
     e.g. 1529: (('r', 24, 3), [0, 1160])
   n: int, number of moves specified in n_moves_dfs
@@ -121,7 +122,81 @@ def count_full_paths(mv_lookup, n, ignore_big_tiles=True):
   return cnt_d
 
 
+def suggest_move_dir(board_arr, next_tiles):
+  #naive suggestions. TODO: step forward more moves if the results are close
 
+  #this is pretty slow, so step down
+  #n_moves = 4 if (board_arr == 0).sum() <= 1 else 3
+  n_moves = 4 if (board_arr == 0).sum() <= 0 else 3
+
+  all_counts = Counter()  
+  for nt in next_tiles:
+    mv_lookup_d = n_move_dfs(board_arr, n_moves, next_tile=nt)
+    dircounts = count_full_paths(mv_lookup_d, n_moves)
+    all_counts += dircounts
+  
+  return all_counts.most_common()[0][0]
+
+def semiauto_play(game, move_suggestion_func, **kwargs):
+  """game: ThreesBoard like object
+  move_suggestion_func: func that returns a direction character
+  TODO remember how to do argument passing with funcs as args
+  
+  RETURNS
+  list of move tuples 
+  """
+  moves = []
+  # first_board = np.array([[3,1,0,768],[3,0,0,1],[3,2,2,2],[0,0,0,0]])
+  # game = ThreesAgent(first_board)
+  # midgame_arr = np.array([[0,0,24,6],[1,48,768,2],[6,24,6,3],[12,0,2,2]])
+  # game = ThreesAgent(midgame_arr)
+  # midgame_arr2 = np.array([[3,12,1,12],[24,12,96,24],[6,384,24,768],[2,12,48,6]])
+  # game = ThreesAgent(midgame_arr2)
+  while True:
+    print('\n')
+    print(game.board)
+
+    nexts_inp = input('Next? ')
+    if nexts_inp == 'q':
+      break
+    next_tiles = [int(x) for x in nexts_inp.split(' ')]
+    
+    #### args hard coded for suggest_move_dir(board_arr, next_tiles)
+    dirch = move_suggestion_func(game.board, next_tiles, **kwargs)
+
+    poss_move_inds = list(game.check_move_dirs()[dirch].keys())
+
+    print(f'Moving {dirch}, adding a {next_tiles} tile at index {poss_move_inds}')
+    
+    next_tile_ind = input('New tile index, (x: chdir, n: chtile) ')
+    edited = False
+    
+    if 'x' in next_tile_ind or 'n' in next_tile_ind:
+      edited = True
+      if 'x' in next_tile_ind:
+        dirch = input('Override move direction? ')
+
+    if 'n' in next_tile_ind or len(next_tiles) > 1:
+      nt = input('New tile value? ')
+    else:
+      nt = next_tiles[0]
+
+    if edited:
+      next_tile_ind = input('Redo new tile index? ')
+
+    if next_tile_ind == '':
+      if len(poss_move_inds) == 1:
+        next_tile_ind = poss_move_inds[0]
+      else:
+        next_tile_ind = input("Please enter the new tile's index ")
+
+    moved_bool = game.move(dirch, int(nt), int(next_tile_ind))
+    if not moved_bool:
+      print(f'Failed to move {dirch} with tile {nt} into {next_tile_ind}. Try again')
+    else:
+      moves.append((dirch, nt, next_tile_ind))
+
+  return moves
 
 
 
@@ -129,20 +204,6 @@ if __name__ == "__main__":
   almost_out = np.array([[2, 3, 1, 3], [12, 3, 1, 1], [2, 3, 24, 1], [3, 2, 6, 3]])
   ao_tag = ThreesAgent(almost_out)
   
-  
-
-  # mvs_list_of_tups = ao_tag.look_ahead_n_moves()
-  # lmlot = len(mvs_list_of_tups)
-  # #print(lmlot)
-  #assert lmlot == 48771
-
-  #print(mvs_list_of_tups)
-
-  #print(ao_tag.check_move_dirs())
-
-
-
-
 
   #print(n_move_dfs(almost_out, 5))
   ao2 = np.array([[48, 192, 384, 1536], [24, 96, 12, 6], [48, 12, 6, 2], [2, 3, 3, 3]])
@@ -151,163 +212,6 @@ if __name__ == "__main__":
   assert count_full_paths(n_move_dfs(ao2, n_moves, next_tile=2), n_moves) == {'u': 0, 'd': 0, 'l': 0, 'r': 0}
   
 
-#### IPYTHON TESTING
-"""
-n_moves = 4
-game = ThreesAgent(np.array([[2,24,12,48], [3, 12, 24, 192], [6, 12, 384, 2], [2, 12, 1, 1536]]))
-game.move('d', 3, 1)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('r', 1, 1)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('u', 1, 0)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-n_moves = 4
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.board
-game.move('l', 1, 3)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=None), n_moves, ignore_big_tiles=False)
-game.move('d', 12, 0)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('r', 2, 1)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('u', 3, 0)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('d', 1, 0)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('d', 3, 0)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('u', 2, 0)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('l', 3, 1)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('d', 3, 1)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('l', 2, 0)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('u', 3, 1)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-count_full_paths(n_move_dfs(game.board, 5, next_tile=3), 5)
-game.move('l', 3, 2)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('d', 2, 1)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('u', 2, 3)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('l', 1, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('l', 3, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('u', 1, 3)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('l', 1, 1)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('d', 1, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('u', 2, 2)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('d', 1, 2)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('r', 1, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('r', 1, 3)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('u', 2, )
-game.move('u', 2, 0)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('r', 2, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('u', 3, 1)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('l', 2, 2)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('r', 3, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('d', 2, 2)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('l', 3, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('d', 3, 0)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('d', 1,3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('r', 1, 1)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('d', 3, 0)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-count_full_paths(n_move_dfs(game.board, 5, next_tile=2), 5)
-game.board
-game.move('l', 2, 0)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('u', 2, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('l', 3, 3)
-game.board
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=None), n_moves, ignore_big_tiles=False)
-game.move('l', 12, 1)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('u', 3, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('l', 1, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('u', 2, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=2), n_moves)
-game.move('r',2,3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('l',1,2)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=3), n_moves)
-game.move('u', 3, 3)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=1), n_moves)
-game.move('d', 1, 0)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=None), n_moves, ignore_big_tiles=False)
-##count_full_paths(n_move_dfs(game.board, n_moves, next_tile=48), n_moves, ignore_big_tiles=False)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=48), n_moves)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=96), n_moves)
-count_full_paths(n_move_dfs(game.board, n_moves, next_tile=192), n_moves)
-game.move('r', 48, 3)
-game.board
-game2 = ThreesAgent(np.array([[      1,  768, 0,   0],
-       [   6, 1536,    3,    2],
-       [  12,    6,   24,    3],
-       [      3,   12,   12, 48]])
-       )
-###oops!
-game2.board
-count_full_paths(n_move_dfs(game2.board, n_moves, next_tile=3), n_moves)
-game2.move('r', 3, 3)
-count_full_paths(n_move_dfs(game2.board, n_moves, next_tile=1), n_moves)
-game2.move('u', 1, 2)
-count_full_paths(n_move_dfs(game2.board, n_moves, next_tile=1), n_moves)
-game2.move('l', 1, 1)
-count_full_paths(n_move_dfs(game2.board, n_moves, next_tile=3), n_moves)
-game2.move('d',3,2)
-game2.board
-count_full_paths(n_move_dfs(game2.board, n_moves, next_tile=1), n_moves)
-n_moves = 3
-game2.move('r',1,2)
-count_full_paths(n_move_dfs(game2.board, n_moves, next_tile=2), n_moves)
-game.board
-history
-
-"""
-#### This worked better than expected. Playing agent could use count_full_paths
-#### with something like n_moves = 4 if (game.board == 0).sum() == 0 or 1 and
-#### n_moves = 3 if ^^ > 1...
+  midgame_arr2 = np.array([[3,12,1,12],[24,12,96,24],[6,384,24,768],[2,12,48,6]])
+  g2 = ThreesAgent(midgame_arr2)
+  mm = semiauto_play(g2, suggest_move_dir)
