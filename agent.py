@@ -135,7 +135,11 @@ def suggest_move_dir(board_arr, next_tiles):
     dircounts = count_full_paths(mv_lookup_d, n_moves)
     all_counts += dircounts
   
-  return all_counts.most_common()[0][0]
+  acmc = all_counts.most_common()
+  if acmc == []:
+    return None
+  else:
+    return acmc[0][0]
 
 def semiauto_play(game, move_suggestion_func, **kwargs):
   """game: ThreesBoard like object
@@ -163,6 +167,9 @@ def semiauto_play(game, move_suggestion_func, **kwargs):
     
     #### args hard coded for suggest_move_dir(board_arr, next_tiles)
     dirch = move_suggestion_func(game.board, next_tiles, **kwargs)
+    if dirch is None:
+      print('No moves available')
+      break
 
     poss_move_inds = list(game.check_move_dirs()[dirch].keys())
 
