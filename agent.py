@@ -122,12 +122,13 @@ def count_full_paths(mv_lookup, n, ignore_big_tiles=True):
   return cnt_d
 
 
-def suggest_move_dir(board_arr, next_tiles):
+def suggest_move_dir(board_arr, next_tiles, n_moves = None, **kwargs):
   #naive suggestions. TODO: step forward more moves if the results are close
 
-  #this is pretty slow, so step down
-  #n_moves = 4 if (board_arr == 0).sum() <= 1 else 3
-  n_moves = 4 if (board_arr == 0).sum() <= 0 else 3
+  if n_moves is None:
+    #this is pretty slow, so step down
+    #n_moves = 4 if (board_arr == 0).sum() <= 1 else 3
+    n_moves = 4 if (board_arr == 0).sum() <= 0 else 3
 
   all_counts = Counter()  
   for nt in next_tiles:
@@ -172,8 +173,9 @@ def semiauto_play(game, move_suggestion_func, **kwargs):
       break
 
     poss_move_inds = list(game.check_move_dirs()[dirch].keys())
-
-    print(f'Moving {dirch}, adding a {next_tiles} tile at index {poss_move_inds}')
+    dirprint = {'u':'UP ^', 'd':'DOWN \/', 'l':'LEFT <', 'r':'RIGHT >'}
+    print(f'Moving {dirprint[dirch]}')
+    print(f'adding {next_tiles[0]} tile at {poss_move_inds}')
     
     next_tile_ind = input('New tile index, (x: chdir, n: chtile) ')
     edited = False
@@ -197,28 +199,35 @@ def semiauto_play(game, move_suggestion_func, **kwargs):
       else:
         next_tile_ind = input("Please enter the new tile's index ")
 
-    moved_bool = game.move(dirch, int(nt), int(next_tile_ind))
+    mvtupfinal = (dirch, int(nt), int(next_tile_ind))
+    moved_bool = game.move(*mvtupfinal)
     if not moved_bool:
       print(f'Failed to move {dirch} with tile {nt} into {next_tile_ind}. Try again')
     else:
-      moves.append((dirch, nt, next_tile_ind))
+      moves.append(mvtupfinal)
 
   return moves
 
 
 
 if __name__ == "__main__":
-  almost_out = np.array([[2, 3, 1, 3], [12, 3, 1, 1], [2, 3, 24, 1], [3, 2, 6, 3]])
-  ao_tag = ThreesAgent(almost_out)
+  # almost_out = np.array([[2, 3, 1, 3], [12, 3, 1, 1], [2, 3, 24, 1], [3, 2, 6, 3]])
+  # ao_tag = ThreesAgent(almost_out)
   
 
-  #print(n_move_dfs(almost_out, 5))
-  ao2 = np.array([[48, 192, 384, 1536], [24, 96, 12, 6], [48, 12, 6, 2], [2, 3, 3, 3]])
-  n_moves = 2
-  assert count_full_paths(n_move_dfs(ao2, n_moves, next_tile=None), n_moves) == {'u': 0, 'd': 0, 'l': 10, 'r': 7}
-  assert count_full_paths(n_move_dfs(ao2, n_moves, next_tile=2), n_moves) == {'u': 0, 'd': 0, 'l': 0, 'r': 0}
+  # #print(n_move_dfs(almost_out, 5))
+  # ao2 = np.array([[48, 192, 384, 1536], [24, 96, 12, 6], [48, 12, 6, 2], [2, 3, 3, 3]])
+  # n_moves = 2
+  # assert count_full_paths(n_move_dfs(ao2, n_moves, next_tile=None), n_moves) == {'u': 0, 'd': 0, 'l': 10, 'r': 7}
+  # assert count_full_paths(n_move_dfs(ao2, n_moves, next_tile=2), n_moves) == {'u': 0, 'd': 0, 'l': 0, 'r': 0}
   
 
-  midgame_arr2 = np.array([[3,12,1,12],[24,12,96,24],[6,384,24,768],[2,12,48,6]])
-  g2 = ThreesAgent(midgame_arr2)
-  mm = semiauto_play(g2, suggest_move_dir)
+  # midgame_arr2 = np.array([[3,12,1,12],[24,12,96,24],[6,384,24,768],[2,12,48,6]])
+  # g2 = ThreesAgent(midgame_arr2)
+  # mm = semiauto_play(g2, suggest_move_dir)
+
+  arr20221115 = np.array([[0,1,2,768],[0,2,3,3],[0,0,3,0],[0,1,0,2]])
+  arr20221116 = np.array([[1,0,0,768],[3,3,0,2],[1,0,0,0],[2,0,2,3]])
+  arr20221117 = np.array([[2,3,2,3072],[0,3,12,768],[192,1,12,384],[3,1,3,96]])
+  g = ThreesAgent(arr20221117)
+  mm = semiauto_play(g, suggest_move_dir, n_moves=4)
