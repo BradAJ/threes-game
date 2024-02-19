@@ -232,20 +232,48 @@ def show_move_options(n_moves=None):
   """Interactive script for playing a few moves ahead. Hard coded to call
   suggest_move_dir"""
   dirprint = {'u':'UP ^', 'd':'DOWN \/', 'l':'LEFT <', 'r':'RIGHT >'}
+  board_arr = None
   while True:
-    q = input('Quit? (q) ')
-    print('\n')
-    if q == 'q':
+    init_inp = input('(n)ew; (q)uit; move (default)? ')
+    if init_inp == 'q':
       break
-    board_arr, next_tiles = streaming_input_by_row()
+    elif (board_arr is not None) and (init_inp != 'n'):
+      new_entry = False
+    else:
+      new_entry = True
+      
+    if new_entry:
+      board_arr, next_tiles = streaming_input_by_row()
+    else:
+      #TODO separate out this block in a func to be also be used in semiauto_play
+      print(game.board)
+      dir_inp = input(f'Move dir? {suggested_dir} (default) ')
+      nt_inp = input(f'Next tile? {next_tiles[0]} (default) ')
+      dirch = dir_inp if dir_inp in {'u', 'd', 'l', 'r'} else suggested_dir
+      nt = next_tiles[0] if nt_inp == '' else int(nt_inp)
+
+      poss_move_inds = list(game.check_move_dirs()[dirch].keys())
+      nt_index_inp = input(f'Index of next_tile ({poss_move_inds})? (list start default) ')
+      nt_index = poss_move_inds[0] if nt_index_inp == '' else int(nt_index_inp)
+
+      moved_bool = game.move(dirch, nt, nt_index)
+      if moved_bool:
+        board_arr = game.board
+        nt_inp2 = input('Move successful, next tile(s)? ')
+        next_tiles = [int(x) for x in nt_inp2.split(' ')]
+      else:
+        print(f'Failed to move {dirch} with tile {nt} into {next_tile_ind}. Try again')
+        continue
+
     try:
-      game = ThreesBoard(board_arr)
+      game = ThreesAgent(board_arr)
       print(game.board)
     except ValueError:
       print('Unexpected board state, retry.')
       continue
     mv_cnts_d = suggest_move_dir(board_arr, next_tiles, n_moves=n_moves)
-    print(dirprint[mv_cnts_d[0][0]])
+    suggested_dir = mv_cnts_d[0][0]
+    print(dirprint[suggested_dir])
     print(mv_cnts_d)
 
 
