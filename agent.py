@@ -140,7 +140,8 @@ def suggest_move_dir(board_arr, next_tiles, n_moves = None, **kwargs):
   if acmc == []:
     return None
   else:
-    return acmc[0][0]
+    #return acmc[0][0] #commenting this out breaks semiauto_play(?) -- in favor of show_move_options
+    return acmc
 
 def semiauto_play(game, move_suggestion_func, **kwargs):
   """game: ThreesBoard like object
@@ -209,6 +210,44 @@ def semiauto_play(game, move_suggestion_func, **kwargs):
   return moves
 
 
+def streaming_input_by_row():
+  """Script to take Threes board as input. One row at a time, numbers separated by 
+  spaces. Return tuple: array, next_tiles list. 
+
+  TODO clean up copied code with semiauto_play version of inputting"""
+  rows = []
+  for i in range(1, 6):
+    if i < 5:
+      inp = input(f'Enter row {i}: ')
+    else:
+      inp = input('Next tile(s)? ')
+    inp_ints = [int(x) for x in inp.split(' ')]
+    if i < 5:
+      rows.append(inp_ints)
+
+  return np.array(rows), inp_ints
+
+
+def show_move_options(n_moves=None):
+  """Interactive script for playing a few moves ahead. Hard coded to call
+  suggest_move_dir"""
+  dirprint = {'u':'UP ^', 'd':'DOWN \/', 'l':'LEFT <', 'r':'RIGHT >'}
+  while True:
+    q = input('Quit? (q) ')
+    print('\n')
+    if q == 'q':
+      break
+    board_arr, next_tiles = streaming_input_by_row()
+    try:
+      game = ThreesBoard(board_arr)
+      print(game.board)
+    except ValueError:
+      print('Unexpected board state, retry.')
+      continue
+    mv_cnts_d = suggest_move_dir(board_arr, next_tiles, n_moves=n_moves)
+    print(dirprint[mv_cnts_d[0][0]])
+    print(mv_cnts_d)
+
 
 if __name__ == "__main__":
   # almost_out = np.array([[2, 3, 1, 3], [12, 3, 1, 1], [2, 3, 24, 1], [3, 2, 6, 3]])
@@ -226,8 +265,10 @@ if __name__ == "__main__":
   # g2 = ThreesAgent(midgame_arr2)
   # mm = semiauto_play(g2, suggest_move_dir)
 
-  arr20221115 = np.array([[0,1,2,768],[0,2,3,3],[0,0,3,0],[0,1,0,2]])
-  arr20221116 = np.array([[1,0,0,768],[3,3,0,2],[1,0,0,0],[2,0,2,3]])
-  arr20221117 = np.array([[2,3,2,3072],[0,3,12,768],[192,1,12,384],[3,1,3,96]])
-  g = ThreesAgent(arr20221117)
-  mm = semiauto_play(g, suggest_move_dir, n_moves=4)
+  # arr20221115 = np.array([[0,1,2,768],[0,2,3,3],[0,0,3,0],[0,1,0,2]])
+  # arr20221116 = np.array([[1,0,0,768],[3,3,0,2],[1,0,0,0],[2,0,2,3]])
+  # arr20221117 = np.array([[2,3,2,3072],[0,3,12,768],[192,1,12,384],[3,1,3,96]])
+  # g = ThreesAgent(arr20221117)
+  # mm = semiauto_play(g, suggest_move_dir, n_moves=4)
+
+  show_move_options()
